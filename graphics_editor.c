@@ -23,141 +23,19 @@ static void clear_canvas(void) {
 static void set_pixel(int x, int y) {
     if (x >= 0 && x < W && y >= 0 && y < H)
         canvas[y][x] = '*';
-}
-
-static void draw_line(int x1, int y1, int x2, int y2) {
-    int dx = abs(x2 - x1), dy = abs(y2 - y1);
-    int sx = x1 < x2 ? 1 : -1, sy = y1 < y2 ? 1 : -1;
-    int err = dx - dy, x = x1, y = y1, e2;
-    while (1) {
-        set_pixel(x, y);
-        if (x == x2 && y == y2) break;
-        e2 = 2 * err;
-        if (e2 > -dy) { err -= dy; x += sx; }
-        if (e2 < dx)  { err += dx; y += sy; }
     }
-}
 
-static void draw_circle(int cx, int cy, int r) {
-    int x = 0, y = r, d = 3 - 2 * r;
-    while (r >= 0 && x <= y) {
-        set_pixel(cx+x,cy+y); set_pixel(cx-x,cy+y);
-        set_pixel(cx+x,cy-y); set_pixel(cx-x,cy-y);
-        set_pixel(cx+y,cy+x); set_pixel(cx-y,cy+x);
-        set_pixel(cx+y,cy-x); set_pixel(cx-y,cy-x);
-        if (d < 0) d += 4 * x + 6; else { d += 4 * (x - y) + 10; y--; }
-        x++;
-    }
-}
-
-static void draw_rectangle(int x1, int y1, int x2, int y2) {
-    int l = x1 < x2 ? x1 : x2, r = x1 > x2 ? x1 : x2;
-    int t = y1 < y2 ? y1 : y2, b = y1 > y2 ? y1 : y2;
-    draw_line(l,t,r,t); draw_line(l,b,r,b);
-    draw_line(l,t,l,b); draw_line(r,t,r,b);
-}
-
-static void draw_triangle(int x1, int y1, int x2, int y2, int x3, int y3) {
-    draw_line(x1,y1,x2,y2); draw_line(x2,y2,x3,y3); draw_line(x3,y3,x1,y1);
-}
-
-static void draw_obj(Obj *o) {
-    switch (o->type) {
-        case 0: draw_circle(o->p[0], o->p[1], o->p[2]); break;
-        case 1: draw_rectangle(o->p[0], o->p[1], o->p[2], o->p[3]); break;
-        case 2: draw_line(o->p[0], o->p[1], o->p[2], o->p[3]); break;
-        case 3: draw_triangle(o->p[0], o->p[1], o->p[2], o->p[3], o->p[4], o->p[5]); break;
-    }
-}
-
-static void redraw(void) {
-    int i;
-    clear_canvas();
-    for (i = 0; i < count; i++) draw_obj(&objs[i]);
-}
-
-static void display_picture(void) {
-    int r, c;
-    putchar('\n');
-    for (r = 0; r < H; r++) {
-        for (c = 0; c < W; c++) putchar(canvas[r][c]);
-        putchar('\n');
-    }
-    putchar('\n');
-}
-
-static void list_objects(void) {
-    int i, j;
-    if (!count) { printf("No objects.\n"); return; }
-    for (i = 0; i < count; i++) {
-        printf("%d. %s:", i + 1, names[objs[i].type]);
-        for (j = 0; j < npar[objs[i].type]; j++) printf(" %d", objs[i].p[j]);
-        putchar('\n');
-    }
-}
-
-static int read_shape(void) {
-    int c;
-    printf("1.Circle 2.Rectangle 3.Line 4.Triangle\nChoice: ");
-    return scanf("%d", &c) == 1 && c >= 1 && c <= 4 ? c - 1 : -1;
-}
-
-static int read_params(Obj *o) {
-    int i, ok = 1;
-    printf("Enter %d values: ", npar[o->type]);
-    for (i = 0; i < npar[o->type]; i++)
-        if (scanf("%d", &o->p[i]) != 1) ok = 0;
-    return ok;
-}
-
-static int read_index(void) {
-    int i;
-    list_objects();
-    if (!count) return -1;
-    printf("Object #: ");
-    if (scanf("%d", &i) != 1 || i < 1 || i > count) return -1;
-    return i - 1;
-}
-
-static void add_object(void) {
-    Obj o;
-    if (count >= MAX) { printf("Full.\n"); return; }
-    o.type = read_shape();
-    if (o.type < 0 || !read_params(&o)) { printf("Bad input.\n"); return; }
-    objs[count++] = o;
-    redraw();
-}
-
-static void delete_object(void) {
-    int i, idx = read_index();
-    if (idx < 0) return;
-    for (i = idx; i < count - 1; i++) objs[i] = objs[i + 1];
-    count--;
-    redraw();
-}
-
-static void modify_object(void) {
-    int idx = read_index();
-    if (idx < 0) return;
-    if (!read_params(&objs[idx])) printf("Bad input.\n");
-    else redraw();
-}
-
-int main(void) {
-    int ch;
-    clear_canvas();
-    while (1) {
-        printf("\n1.Add 2.Delete 3.Modify 4.List 5.Display 6.Clear 7.Exit\nChoice: ");
-        if (scanf("%d", &ch) != 1) { while (getchar() != '\n'); continue; }
-        switch (ch) {
-            case 1: add_object(); break;
-            case 2: delete_object(); break;
-            case 3: modify_object(); break;
-            case 4: list_objects(); break;
-            case 5: display_picture(); break;
-            case 6: count = 0; clear_canvas(); break;
-            case 7: return 0;
-            default: printf("Invalid.\n");
+    static void draw_line(int x1, int y1, int x2, int y2) {
+        int dx = abs(x2 - x1), dy = abs(y2 - y1);
+        int sx = x1 < x2 ? 1 : -1, sy = y1 < y2 ? 1 : -1;
+        int err = dx - dy, x = x1, y = y1, e2;
+        while (1) {
+            set_pixel(x, y);
+            if (x == x2 && y == y2) break;
+            e2 = 2 * err;
+            if (e2 > -dy) { err -= dy; x += sx; }
+            if (e2 < dx)  { err += dx; y += sy; }
         }
     }
-}
+    
+
