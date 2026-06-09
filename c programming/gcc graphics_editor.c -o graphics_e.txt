@@ -1,0 +1,2 @@
+gcc graphics_editor.c -o graphics_editor.exe      (compile).
+graphics_editor.exe                      (run)
