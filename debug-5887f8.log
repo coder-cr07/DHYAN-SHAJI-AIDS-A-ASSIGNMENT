@@ -1,4 +1,0 @@
-{"sessionId":"5887f8","hypothesisId":"H1","location":"main","message":"menu_choice","data":{"a":1,"b":0,"c":0},"timestamp":-1416150840}
-{"sessionId":"5887f8","hypothesisId":"H3","location":"read_params","message":"params_ok","data":{"a":0,"b":3,"c":1},"timestamp":-1416137840}
-{"sessionId":"5887f8","hypothesisId":"H2","location":"add_object","message":"added","data":{"a":1,"b":0,"c":21},"timestamp":-1416137840}
-{"sessionId":"5887f8","hypothesisId":"H1","location":"main","message":"menu_choice","data":{"a":5,"b":1,"c":0},"timestamp":-1416104840}
