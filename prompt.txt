@@ -1,0 +1,183 @@
+================================================================
+  2D ASCII GRAPHICS EDITOR — PROJECT BUILD NOTES
+================================================================
+
+----------------------------------------------------------------
+TOOLS & MODELS USED
+----------------------------------------------------------------
+  Editor                    : Cursor
+  Skeleton / reference code : Composer 2.5
+  Manual writing & debugging: Claude Sonnet 4.6  *** KEY MODEL ***
+
+----------------------------------------------------------------
+PROJECT OVERVIEW
+----------------------------------------------------------------
+A single-file, menu-driven C program that renders ASCII shapes
+on a 60x20 character canvas.
+  Background character : _
+  Drawn pixel          : *
+Up to 100 shapes can be stored. The canvas is fully redrawn
+after every add, delete, or modify operation.
+
+----------------------------------------------------------------
+KEY SPECIFICATIONS
+----------------------------------------------------------------
+
+  Constants:
+    #define W   60      // canvas width
+    #define H   20      // canvas height
+    #define MAX 100     // max stored objects
+
+  Data Structure:
+    typedef struct {
+        int type;       // shape identifier (0-3)
+        int p[6];       // up to 6 coordinate/parameter values
+    } Obj;
+
+  Global Variables:
+    char  canvas[H][W];
+    Obj   objs[MAX];
+    int   count = 0;
+    const char *names[] = {"Circle","Rectangle","Line","Triangle"};
+    const int   npar[]  = {3, 4, 4, 6};
+
+----------------------------------------------------------------
+SUPPORTED SHAPES & PARAMETERS
+----------------------------------------------------------------
+  Shape         Parameters stored in p[]
+  ----------    ----------------------------
+  Circle        cx, cy, radius
+  Rectangle     x1, y1, x2, y2
+  Line          x1, y1, x2, y2
+  Triangle      x1, y1, x2, y2, x3, y3
+
+----------------------------------------------------------------
+CORE FUNCTIONS
+----------------------------------------------------------------
+
+  *** DRAWING ALGORITHMS ***
+
+  draw_line  —  Bresenham's Line Algorithm
+  -----------------------------------------
+    int dx = abs(x2-x1), dy = abs(y2-y1);
+    int sx = x1<x2 ? 1:-1,  sy = y1<y2 ? 1:-1;
+    int err = dx-dy, e2;
+    while(1) {
+        set_pixel(x,y);
+        if(x==x2 && y==y2) break;
+        e2 = 2*err;
+        if(e2 > -dy) { err -= dy; x += sx; }
+        if(e2 <  dx) { err += dx; y += sy; }
+    }
+
+  draw_circle  —  Midpoint Circle Algorithm (8-octant symmetry)
+  ---------------------------------------------------------------
+    int x=0, y=r, d=3-2*r;
+    while(r>=0 && x<=y) {
+        // plot all 8 symmetric points around (cx, cy)
+        if(d>=0) { d += 4*(x-y)+10; y--; }
+        else       d += 4*x+6;
+        x++;
+    }
+
+  draw_rectangle  —  4 calls to draw_line (top/bottom/left/right)
+  draw_triangle   —  3 calls to draw_line connecting each vertex pair
+
+  *** CANVAS UTILITIES ***
+
+  clear_canvas()           fills canvas[H][W] with '_'
+  set_pixel(int x, int y)  bounds-checked; writes '*' to canvas[y][x]
+  display_picture()        prints canvas row by row
+  redraw()                 clear_canvas() + draw_obj() for all objects
+
+----------------------------------------------------------------
+OBJECT MANAGEMENT
+----------------------------------------------------------------
+  add_object()     reads shape + params -> appends to objs[count++] -> redraw
+  delete_object()  reads index -> shifts array left -> count-- -> redraw
+  modify_object()  reads index -> overwrites params -> redraw
+  list_objects()   prints "i. ShapeName: p0 p1 p2 ..."
+
+----------------------------------------------------------------
+MAIN MENU
+----------------------------------------------------------------
+  1. Add    2. Delete    3. Modify
+  4. List   5. Display   6. Clear    7. Exit
+
+  Option 6 : resets count=0 and clears canvas
+  Option 7 : exits with return code 0
+
+----------------------------------------------------------------
+BUGS FIXED DURING DEVELOPMENT
+----------------------------------------------------------------
+  Function        Bug                    Fix
+  -----------     --------------------   -----------------------------------
+  clear_canvas    Wrong loop logic       for r->H, for c->W: canvas[r][c]='_'
+  set_pixel       Missing bounds check   if(x>=0 && x<W && y>=0 && y<H)
+  draw_line  ***  Incorrect Bresenham    e2=2*err; separate x and y step
+                  step logic             checks — FIXED WITH CLAUDE SONNET 4.6
+
+----------------------------------------------------------------
+SPECIAL FEATURE: TELEMETRY / DEBUG HOOKS
+----------------------------------------------------------------
+  Three debug_log() call-points embedded for tracing:
+
+  Hook  Location       What it logs
+  ----  -----------    -------------------------------------------
+  H1    main loop      Menu choice selected, current object count
+  H2    add_object     Confirms add; logs count, type, first param
+  H3    read_params    Param read success/failure per shape type
+
+----------------------------------------------------------------
+BUILD & RUN
+----------------------------------------------------------------
+  Compile:  gcc -Wall -o graphics_editor graphics_editor.c
+  Run:      ./graphics_editor
+
+  Required headers: <stdio.h>  <stdlib.h>  <time.h>
+
+
+---------------------------------------------------------------------------
+TOOLS & MODELS USED for summarising txt file
+---------------------------------------------------------------------------
+         INPUT                                     
+ ---------------------------------------------------------              
+ can u compress and make the given 
+ text file readible( the text file 
+ is based on promts used to build 
+ the given project) without missing
+  any important points and highlighting 
+  the important prompts.
+
+  
+  
+  ( A mannually written txt file was
+   given as a input which summarised the 
+   entier code)
+
+
+
+       OUTPUT
+  ----------------------------------------------------------
+  Here's what was done to compress and clean up the document:
+Removed: Repetitive filler text, redundant section headers, 
+the raw LLM preamble ("I'll implement…"), malformed comment 
+syntax (\\\*), and duplicate shape/parameter tables.
+Restructured into 7 clean sections:
+
+Tools & models → a quick reference table
+Specs → constants, struct, and globals in one code block
+Shapes → a single consolidated parameter table
+Core functions → the actual Bresenham code blocks are 
+kept and highlighted since they're the most important algorithmic 
+content
+Object management → one-liner descriptions per function
+Bugs fixed → a table that clearly shows what broke and how it was fixed,
+ with credit to Claude Sonnet 4.6 for the draw_line fix
+Telemetry hooks → the debug_log call-points are now in a proper
+ table instead of buried in prose
+
+The document went from ~100 lines of hard-to-parse mixed prose/pseudocode
+ to a structured reference you can actually use while coding.
+
+================================================================
