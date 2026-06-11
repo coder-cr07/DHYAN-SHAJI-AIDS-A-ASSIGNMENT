@@ -3,6 +3,65 @@
 ================================================================
 
 ----------------------------------------------------------------
+Prompts Used
+----------------------------------------------------------------
+Act as an expert C programmer. Generate a complete, single-file C 
+program that acts as a text-based ASCII vector graphics editor using 
+a 2D char array canvas. You must follow the exact specifications, 
+function names, structures, global variables, and algorithmic 
+logic detailed below. 
+
+### 1. Global Configurations and Constants
+* Define macro constants: `W` as 60, `H` as 20, and `MAX` as 100.
+* Define a structure typedefined as `Obj` containing:
+  - `int type` (stores the shape identifier)
+  - `int p[6]` (stores up to 6 coordinate/parameter values)
+
+### 2. Global Variables (Static)
+* `canvas`: A 2D char array of size `[H][W]`.
+* `objs`: An array of `Obj` structures with a capacity of `MAX`.
+* `count`: An integer tracking the number of active objects in `objs`.
+* `names`: A constant string array mapping type indices to names: `{"Circle", "Rectangle", "Line", "Triangle"}`.
+* `npar`: A constant integer array storing the number of parameters per shape type: `{3, 4, 4, 6}`.
+
+### 3. Debug Logging System
+Implement a specific JSON logging function used for debugging telemetry:
+* **Signature**: `static void debug_log(const char *hypothesisId, const char *location, const char *message, int a, int b, int c)`
+* **Behavior**: Opens `"debug-5887f8.log"` in append mode (`"a"`). If successful, writes a single JSON line with the keys: `sessionId` (hardcoded to `"5887f8"`), `hypothesisId`, `location`, `message`, a nested object `data` containing `{ "a": a, "b": b, "c": c }`, and a `timestamp` generated via `(long)time(NULL) * 1000`. Closes the file.
+
+### 4. Canvas & Drawing Functions (Internal Logic)
+* `static void flush_input(void)`: Flushes standard input until a newline (`\n`) or `EOF` is reached.
+* `static void clear_canvas(void)`: Fills every cell of `canvas` with the character `'_'`.
+* `static void set_pixel(int x, int y)`: Performs boundary checks (`x` between `0` and `W-1`, `y` between `0` and `H-1`). If safe, updates `canvas[y][x]` to `'*'`.
+* `static void draw_line(int x1, int y1, int x2, int y2)`: Implements **Bresenham's Line Algorithm**. Track delta steps (`dx`, `dy`), steps (`sx`, `sy`), and the error accumulator `err = dx - dy`. Loop indefinitely, calling `set_pixel(x, y)`. Break if `x == x2 && y == y2`. Update `err`, `x`, and `y` using the factor `e2 = 2 * err`.
+* `static void draw_circle(int cx, int cy, int r)`: Implements **Bresenham's / Midpoint Circle Algorithm**. Initialize `x = 0`, `y = r`, and decision parameter `d = 3 - 2 * r`. Loop while `r >= 0 && x <= y`. Plot all 8 octants relative to `(cx, cy)` using `set_pixel`. Adjust `d` and decrement `y` when `d >= 0`, and always increment `x`.
+* `static void draw_rectangle(int x1, int y1, int x2, int y2)`: Identifies minimums/maximums to establish boundary lines (`l`, `r`, `t`, `b`). Draws the 4 edges using `draw_line`.
+* `static void draw_triangle(int x1, int y1, int x2, int y2, int x3, int y3)`: Connects the three vertices sequentially using three `draw_line` calls.
+
+### 5. Object Rendering Engine
+* `static void draw_obj(Obj *o)`: A switch-case on `o->type` invoking the respective drawing function: `0` for circle, `1` for rectangle, `2` for line, `3` for triangle. Pass coordinates from the `o->p` array sequentially.
+* `static void redraw(void)`: Calls `clear_canvas()` first, then iterates from `0` to `count - 1` invoking `draw_obj(&objs[i])`.
+* `static void display_picture(void)`: Prints a newline, loops through the `canvas` row-by-row to display the characters to `stdout`, then prints another terminating newline.
+
+### 6. User Interaction & Data Mutators
+* `static void list_objects(void)`: Prints `"No objects.\n"` if empty. Otherwise, outputs each index, shape name, and parameters sequentially on a line (e.g., `1. Circle: 30 10 8`).
+* `static int read_shape(void)`: Displays a menu numbered 1 to 4 for shapes. Validates input using `scanf`. Returns `choice - 1` if valid, otherwise `-1`.
+* `static int read_params(Obj *o)`: Prompts the user for `npar[o->type]` values. Loops to populate `o->p`. Validates using `scanf`. 
+  - **Telemetry hook**: Immediately invokes `debug_log("H3", "read_params", ok ? "params_ok" : "params_fail", o->type, npar[o->type], ok)`. Flushes input if scanning fails. Returns `ok` flag status.
+* `static int read_index(void)`: Lists objects first. If valid, asks for an `"Object #: "` (1-indexed). Returns the 0-indexed integer on success, or `-1` on failure.
+* `static void add_object(void)`: Confirms space within `MAX`. Resolves shape type and parameters. If valid, appends the new object to `objs[count++]`, runs `redraw()`, logs via `debug_log("H2", "add_object", "added", count, o.type, o.p[0])`, and displays the layout.
+* `static void delete_object(void)`: Queries index via `read_index()`. Shifts subsequent elements left to overwrite the target index, decrements `count`, and runs `redraw()`.
+* `static void modify_object(void)`: Queries index via `read_index()`. Overwrites the parameters at that index using `read_params()`. Calls `redraw()` on success.
+
+### 7. Core Orchestration Loop
+* `int main(void)`: Clears the canvas. Runs an infinite loop offering a menu option selection: `1.Add 2.Delete 3.Modify 4.List 5.Display 6.Clear 7.Exit`. 
+  - Validates option with `scanf`, flushes input and skips iteration if broken.
+  - **Telemetry hook**: Inside the loop before processing choices, calls `debug_log("H1", "main", "menu_choice", ch, count, 0)`.
+  - Implements a switch case corresponding cleanly to options 1 through 7. Option 6 resets `count = 0` and clears the canvas. Option 7 exits with return code `0`.
+
+Ensure all code formatting matches native, optimized, structural C syntax, using standard headers `<stdio.h>`, `<stdlib.h>`, and `<time.h>`. Do not omit any implementation logic.
+
+----------------------------------------------------------------
 TOOLS & MODELS USED
 ----------------------------------------------------------------
   Editor                    : Cursor
